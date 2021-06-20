@@ -1,0 +1,55 @@
+package top.dean0731.spring.plugin.handler.message;
+
+import cn.hutool.extra.spring.SpringUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+import top.dean0731.spring.entity.wechat.AbstractMessage;
+import top.dean0731.spring.entity.wechat.message.Text;
+import top.dean0731.spring.plugin.handler.AbstractMessageHandler;
+import top.dean0731.spring.plugin.handler.analyze.Handler;
+import top.dean0731.spring.plugin.handler.filter.Filter;
+import top.dean0731.spring.plugin.handler.filter.FilterRegistry;
+import top.dean0731.spring.service.MessageService;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * @ClassName: MessageImageHandler
+ * @Description: 处理图片消息
+ * @Create by: root
+ * @Date: 2021/3/12 17:18
+ */
+@Slf4j
+@Component
+public class MessageCommandHandler extends AbstractMessageHandler {
+    public MessageCommandHandler(MessageService messageService) {
+        super(messageService);
+    }
+    @Autowired
+    FilterRegistry filterRegistry;
+    @Override
+    public AbstractMessage handler(AbstractMessage msg) throws NoSuchMethodException {
+        log.debug("receive a commamd message,handler.... ");
+        Text message = (Text) msg;
+        Matcher matcher = null;
+        for(Pattern p: Handler.PATTERN_HANDLER.keySet()){
+            matcher = p.matcher(message.getContent());
+            if(matcher.find()){
+                Handler analyze = SpringUtil.getBean(Handler.PATTERN_HANDLER.get(p));
+                AbstractMessage ret = null;
+                for(Filter filter:filterRegistry.getFilters()){
+                    HandlerMethod method = new HandlerMethod(analyze.getClass(),analyze.getClass().getMethod("handler"));
+                    ret = filter.handler(message,method);
+                    if(ret!=null){
+                        return ret;
+                    }
+                }
+                return (AbstractMessage) analyze.handler(matcher.group(1),message);
+            }
+        }
+        return null;
+    }
+}
