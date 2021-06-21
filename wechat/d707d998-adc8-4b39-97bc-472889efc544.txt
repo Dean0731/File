@@ -1,0 +1,21 @@
+  {
+    path: '/site',
+    component: Layout,
+    redirect: '/site/select',
+    name: 'Site',
+    meta: { title: 'Site', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'select',
+        name: 'showSite',
+        component: () => import('@/views/site/index'),
+        meta: { title: 'showSite', icon: 'el-icon-files' }
+      },
+      {
+        path: 'setting',
+        name: 'showSetting',
+        component: () => import('@/views/site/setting'),
+        meta: { title: 'setting', icon: 'el-icon-setting' }
+      }
+    ]
+  },
